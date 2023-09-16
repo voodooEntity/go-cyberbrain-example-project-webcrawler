@@ -1,0 +1,27 @@
+[{
+  "Type" : "Dependency",
+  "Value": "alpha",
+  "ID" : 0,
+  "Properties" : {},
+  "ChildRelations" : [
+    {
+      "Target" : {
+        "Type" : "Url",
+        "Value" : "http://www.blafu.com/asndkasd",
+        "ID" : 0,
+        "Properties" : {},
+        "ChildRelations" : [
+          {
+            "Target": {
+              "Type" : "Content",
+              "Value" : "the great page content <a href='http://www.blafu.com/somethingelse'>egrnke</a> and another <a href='blafu.org/nkgelrkgn/asnkasd'>345345</a>",
+              "ID" : 0,
+              "Properties" : {},
+              "ChildRelations" : []
+            }
+          }
+        ]
+      }
+    }
+  ]
+}]
