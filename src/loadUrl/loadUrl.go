@@ -24,10 +24,11 @@ func (self Plugin) New() interfaces.PluginInterface {
 // Execute method mandatory
 func (self Plugin) Execute(input transport.TransportEntity, requirement string, context string) ([]transport.TransportEntity, error) {
 	archivist.DebugF("Plugin executed with input %+v", input)
+	archivist.Info("Running loadUrl with %+v", input)
 	var currUrl string
 	var checkDomain string
 	if "alpha" == requirement {
-		currUrl = input.Children()[0].Children()[0].Value
+		currUrl = input.Value
 		checkDomain = input.Properties["domain"]
 	} else {
 		currUrl = input.Value
@@ -60,7 +61,7 @@ func (self Plugin) Execute(input transport.TransportEntity, requirement string, 
 						Type:       "Page",
 						Context:    "loadUrl",
 						Value:      currUrl,
-						Properties: map[string]string{"domain": currUrlDomain},
+						Properties: make(map[string]string),
 						ChildRelations: []transport.TransportRelation{
 							{
 								Target: transport.TransportEntity{
@@ -68,7 +69,7 @@ func (self Plugin) Execute(input transport.TransportEntity, requirement string, 
 									Type:       "Content",
 									Context:    "loadUrl",
 									Value:      pageContent,
-									Properties: make(map[string]string),
+									Properties: map[string]string{"domain": currUrlDomain},
 								},
 							},
 						},
@@ -114,12 +115,12 @@ func loadPage(currUrl string) (string, error) {
 }
 
 func isTextOrHTMLContentType(contentType string) bool {
-	return strings.HasPrefix(contentType, "text/") || strings.HasPrefix(contentType, "application/xhtml+xml")
+	return strings.HasPrefix(contentType, "text/html") || strings.HasPrefix(contentType, "application/xhtml+xml")
 }
 
 func extractDomain(inputURL string) (string, error) {
 	if !strings.HasPrefix(inputURL, "http://") && !strings.HasPrefix(inputURL, "https://") {
-		inputURL = "http://" + inputURL
+		inputURL = "https://" + inputURL
 	}
 
 	parsedURL, err := url.Parse(inputURL)
@@ -154,33 +155,12 @@ func (self Plugin) GetConfig() transport.TransportEntity {
 					ChildRelations: []transport.TransportRelation{
 						{
 							Target: transport.TransportEntity{
-								ID:         -1,
-								Type:       "Structure",
-								Value:      "Page",
-								Context:    "System",
-								Properties: map[string]string{"Mode": "Set", "Type": "Secondary"},
-								ChildRelations: []transport.TransportRelation{
-									{
-										Target: transport.TransportEntity{
-											ID:         -1,
-											Type:       "Structure",
-											Value:      "Content",
-											Context:    "System",
-											Properties: map[string]string{"Mode": "Set", "Type": "Secondary"},
-											ChildRelations: []transport.TransportRelation{
-												{
-													Target: transport.TransportEntity{
-														ID:         -1,
-														Type:       "Structure",
-														Value:      "Link",
-														Context:    "System",
-														Properties: map[string]string{"Mode": "Set", "Type": "Primary"},
-													},
-												},
-											},
-										},
-									},
-								},
+								ID:             -1,
+								Type:           "Structure",
+								Value:          "Link",
+								Context:        "System",
+								Properties:     map[string]string{"Mode": "Set", "Type": "Primary"},
+								ChildRelations: []transport.TransportRelation{},
 							},
 						},
 					},

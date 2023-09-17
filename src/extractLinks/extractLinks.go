@@ -23,26 +23,28 @@ func (self Plugin) New() interfaces.PluginInterface {
 func (self Plugin) Execute(input transport.TransportEntity, requirement string, context string) ([]transport.TransportEntity, error) {
 	archivist.DebugF("Plugin executed with input %+v", input)
 
-	content := input.Children()[0]
-	links, err := extractLinksFromHTML(content.Value)
+	links, err := extractLinksFromHTML(input.Value)
 	absoluteLinks := ensureAbsoluteLinks(input.Properties["domain"], links)
+	archivist.Debug("absolute link", absoluteLinks)
 	if nil == err {
 		for _, val := range absoluteLinks {
-			content.ChildRelations = append(content.ChildRelations, transport.TransportRelation{
-				Target: transport.TransportEntity{
-					ID:             0,
-					Type:           "Link",
-					Context:        "loadUrl",
-					Value:          val,
-					Properties:     make(map[string]string),
-					ChildRelations: []transport.TransportRelation{},
-				},
-			})
+			if "" != val {
+				input.ChildRelations = append(input.ChildRelations, transport.TransportRelation{
+					Target: transport.TransportEntity{
+						ID:             0,
+						Type:           "Link",
+						Context:        "loadUrl",
+						Value:          val,
+						Properties:     map[string]string{"domain": input.Properties["domain"]},
+						ChildRelations: []transport.TransportRelation{},
+					},
+				})
+			}
 		}
 	}
 
-	content.Properties = make(map[string]string)
-	return []transport.TransportEntity{content}, nil
+	input.Properties = make(map[string]string)
+	return []transport.TransportEntity{input}, nil
 }
 
 func extractLinksFromHTML(inputHTML string) ([]string, error) {
@@ -90,7 +92,7 @@ func ensureAbsoluteLinks(baseURL string, links []string) []string {
 	for _, link := range links {
 		// Parse the link
 		linkURL, err := url.Parse(link)
-		if err != nil {
+		if err != nil || strings.HasPrefix(link, "mailto:") {
 			// Handle the error appropriately
 			archivist.ErrorF("Error parsing link URL: %v\n", err)
 			continue // Skip this link if there was an error parsing it
@@ -130,20 +132,9 @@ func (self Plugin) GetConfig() transport.TransportEntity {
 							Target: transport.TransportEntity{
 								ID:         -1,
 								Type:       "Structure",
-								Value:      "Page",
+								Value:      "Content",
 								Context:    "System",
-								Properties: map[string]string{"Mode": "Set", "Type": "Secondary"},
-								ChildRelations: []transport.TransportRelation{
-									{
-										Target: transport.TransportEntity{
-											ID:         -1,
-											Type:       "Structure",
-											Value:      "Content",
-											Context:    "System",
-											Properties: map[string]string{"Mode": "Set", "Type": "Primary"},
-										},
-									},
-								},
+								Properties: map[string]string{"Mode": "Set", "Type": "Primary"},
 							},
 						},
 					},
