@@ -24,7 +24,7 @@ func (self Plugin) New() interfaces.PluginInterface {
 // Execute method mandatory
 func (self Plugin) Execute(input transport.TransportEntity, requirement string, context string) ([]transport.TransportEntity, error) {
 	archivist.DebugF("Plugin executed with input %+v", input)
-	archivist.Info("Running loadUrl with %+v", input)
+	archivist.InfoF("Running loadUrl with %+v", input)
 	var currUrl string
 	var checkDomain string
 	if "alpha" == requirement {
@@ -78,12 +78,12 @@ func (self Plugin) Execute(input transport.TransportEntity, requirement string, 
 			},
 		},
 	}
-
+	//archivist.InfoF("Return data of loadUrl %+v", ret)
 	return ret, nil
 }
 
 func loadPage(currUrl string) (string, error) {
-
+	archivist.Debug("loading url", currUrl)
 	req, err := http.NewRequest(http.MethodGet, currUrl, nil)
 	if err != nil {
 		archivist.DebugF("client: could not create request: %s\n", err)

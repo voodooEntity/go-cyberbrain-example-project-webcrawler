@@ -6,32 +6,13 @@
   "ChildRelations" : [
     {
       "Target" : {
-        "Type" : "Page",
-        "Value" : "http://www.scriptjungle.de/asndkasd",
+        "Type" : "Link",
+        "Value" : "http://www.comercus.com/solution.html",
         "ID" : 0,
         "Properties" : {
-          "domain" : "scriptjungle.de"
+          "domain" : "comercus.com"
         },
         "ChildRelations" : [
-          {
-            "Target": {
-              "Type" : "Content",
-              "Value" : "the great page content <a href='http://www.scriptjungle.de/somethingelse'>egrnke</a> and another <a href='scriptjungle.de/nkgelrkgn/asnkasd'>345345</a>",
-              "ID" : 0,
-              "Properties" : {},
-              "ChildRelations" : [
-                {
-                  "Target": {
-                    "Type" : "Link",
-                    "Value" : "http://www.scriptjungle.de/something",
-                    "ID" : 0,
-                    "Properties" : {},
-                    "ChildRelations" : []
-                  }
-                }
-              ]
-            }
-          }
         ]
       }
     }
