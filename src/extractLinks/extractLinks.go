@@ -4,8 +4,8 @@ import (
 	"github.com/voodooEntity/archivist"
 	"github.com/voodooEntity/gits/src/transport"
 	"github.com/voodooEntity/go-cyberbrain-plugin-interface/src/interfaces"
-	"golang.org/x/net/html"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -23,9 +23,9 @@ func (self Plugin) New() interfaces.PluginInterface {
 func (self Plugin) Execute(input transport.TransportEntity, requirement string, context string) ([]transport.TransportEntity, error) {
 	archivist.DebugF("Plugin executed with input %+v", input)
 
-	links, err := extractLinksFromHTML(input.Value)
+	links, err := extractLinksFromHTML2(input.Value)
 	absoluteLinks := ensureAbsoluteLinks2(input.Properties["domain"], links)
-	archivist.Debug("absolute link", absoluteLinks)
+	archivist.Info("absolute link", absoluteLinks)
 	ret := []transport.TransportRelation{}
 	if nil == err {
 		for _, val := range absoluteLinks {
@@ -50,32 +50,16 @@ func (self Plugin) Execute(input transport.TransportEntity, requirement string, 
 	return []transport.TransportEntity{input}, nil
 }
 
-func extractLinksFromHTML(inputHTML string) ([]string, error) {
-	links := []string{}
+func extractLinksFromHTML2(html string) ([]string, error) {
+	linkPattern := `<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']`
 
-	// Parse the inputHTML string
-	doc, err := html.Parse(strings.NewReader(inputHTML))
-	if err != nil {
-		return links, err
+	regex := regexp.MustCompile(linkPattern)
+	matches := regex.FindAllStringSubmatch(html, -1)
+
+	var links []string
+	for _, match := range matches {
+		links = append(links, match[1])
 	}
-
-	// Define a recursive function to traverse the HTML nodes
-	var findLinks func(*html.Node)
-	findLinks = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "a" {
-			for _, attr := range n.Attr {
-				if attr.Key == "href" {
-					links = append(links, attr.Val)
-				}
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			findLinks(c)
-		}
-	}
-
-	// Start the traversal
-	findLinks(doc)
 
 	return links, nil
 }
