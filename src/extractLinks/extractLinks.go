@@ -4,7 +4,6 @@ import (
 	"github.com/voodooEntity/archivist"
 	"github.com/voodooEntity/gits/src/transport"
 	"github.com/voodooEntity/go-cyberbrain-plugin-interface/src/interfaces"
-	"net/url"
 	"regexp"
 	"strings"
 )
@@ -23,9 +22,8 @@ func (self Plugin) New() interfaces.PluginInterface {
 func (self Plugin) Execute(input transport.TransportEntity, requirement string, context string) ([]transport.TransportEntity, error) {
 	archivist.DebugF("Plugin executed with input %+v", input)
 
-	links, err := extractLinksFromHTML2(input.Value)
-	absoluteLinks := ensureAbsoluteLinks2(input.Properties["domain"], links)
-	archivist.Info("absolute link", absoluteLinks)
+	links, err := extractLinksFromHTML(input.Value)
+	absoluteLinks := ensureAbsoluteLinks(input.Properties["domain"], links)
 	ret := []transport.TransportRelation{}
 	if nil == err {
 		for _, val := range absoluteLinks {
@@ -46,11 +44,10 @@ func (self Plugin) Execute(input transport.TransportEntity, requirement string, 
 
 	input.ChildRelations = ret
 	input.Properties = map[string]string{"domain": input.Properties["domain"]}
-	//archivist.InfoF("Return data of extractLinks %+v", input)
 	return []transport.TransportEntity{input}, nil
 }
 
-func extractLinksFromHTML2(html string) ([]string, error) {
+func extractLinksFromHTML(html string) ([]string, error) {
 	linkPattern := `<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']`
 
 	regex := regexp.MustCompile(linkPattern)
@@ -64,7 +61,7 @@ func extractLinksFromHTML2(html string) ([]string, error) {
 	return links, nil
 }
 
-func ensureAbsoluteLinks2(baseURL string, links []string) []string {
+func ensureAbsoluteLinks(baseURL string, links []string) []string {
 	baseURL = "https://" + baseURL
 	var absoluteLinks []string
 
@@ -79,42 +76,6 @@ func ensureAbsoluteLinks2(baseURL string, links []string) []string {
 			// Construct an absolute URL by combining the base URL and the relative link
 			absoluteURL := baseURL + "/" + link
 			absoluteLinks = append(absoluteLinks, absoluteURL)
-		}
-	}
-
-	return absoluteLinks
-}
-
-func ensureAbsoluteLinks(baseURL string, links []string) []string {
-	baseURL = "https://" + baseURL
-	var absoluteLinks []string
-
-	// Parse the base URL
-	base, err := url.Parse(baseURL)
-	if err != nil {
-		// Handle the error appropriately
-		archivist.ErrorF("Error parsing base URL: %v\n", err)
-		return absoluteLinks
-	}
-
-	for _, link := range links {
-		cLink := link
-		// Parse the link
-		linkURL, err := url.Parse(cLink)
-		if err != nil || strings.HasPrefix(link, "mailto:") {
-			// Handle the error appropriately
-			//archivist.ErrorF("Error parsing link URL: %v\n", err)
-			continue // Skip this link if there was an error parsing it
-		}
-		//archivist.Info("LinkURL", linkURL)
-		// Check if the link is relative
-		if linkURL.Scheme == "" && linkURL.Host == "" {
-			// Construct an absolute URL by combining the base URL and the relative link
-			absoluteURL := base.ResolveReference(linkURL)
-			absoluteLinks = append(absoluteLinks, absoluteURL.String())
-		} else {
-			// The link is already absolute
-			absoluteLinks = append(absoluteLinks, link)
 		}
 	}
 
