@@ -1,11 +1,11 @@
 package main
 
 import (
+	"errors"
 	"github.com/voodooEntity/archivist"
 	"github.com/voodooEntity/gits/src/transport"
 	"github.com/voodooEntity/go-cyberbrain-plugin-interface/src/interfaces"
-	"regexp"
-	"strings"
+	"net/url"
 )
 
 // define a type to can bind our methods on to export
@@ -22,81 +22,52 @@ func (self Plugin) New() interfaces.PluginInterface {
 func (self Plugin) Execute(input transport.TransportEntity, requirement string, context string) ([]transport.TransportEntity, error) {
 	archivist.DebugF("Plugin executed with input %+v", input)
 
-	contentHtml := input.Children()[0].Children()[0].Value
-	domain := input.Value
+	link := input.ChildRelations[0].Target.ChildRelations[0].Target.ChildRelations[0].Target.Value
+	linkDomain, err := extractDomain(link)
 
-	links, err := extractLinksFromHTML(contentHtml)
-	absoluteLinks := ensureAbsoluteLinks(domain, links)
-	linkEntities := []transport.TransportRelation{}
-	if nil == err {
-		for _, val := range absoluteLinks {
-			if "" != val {
-				linkEntities = append(linkEntities, transport.TransportRelation{
-					Target: transport.TransportEntity{
-						ID:             0,
-						Type:           "Link",
-						Context:        "extractLinks",
-						Value:          val,
-						Properties:     make(map[string]string),
-						ChildRelations: []transport.TransportRelation{},
-					},
-				})
-			}
-		}
+	if nil != err {
+		return []transport.TransportEntity{}, err
+	}
+
+	if linkDomain != input.Value {
+		return []transport.TransportEntity{}, errors.New("skipping link due to wrong domain")
 	}
 
 	ret := transport.TransportEntity{
-		ID:             0,
-		Type:           "Content",
-		Value:          contentHtml,
-		Context:        "loadUrl",
-		Properties:     make(map[string]string),
-		ChildRelations: linkEntities,
+		Type:       "Domain",
+		ID:         0,
+		Value:      input.Value,
+		Context:    "webcrawl",
+		Properties: make(map[string]string),
+		ChildRelations: []transport.TransportRelation{
+			{
+				Target: transport.TransportEntity{
+					ID:         0,
+					Type:       "Page",
+					Value:      link,
+					Context:    "addPage",
+					Properties: make(map[string]string),
+				},
+			},
+		},
 	}
 
 	return []transport.TransportEntity{ret}, nil
 }
 
-func extractLinksFromHTML(html string) ([]string, error) {
-	linkPattern := `<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']`
-
-	regex := regexp.MustCompile(linkPattern)
-	matches := regex.FindAllStringSubmatch(html, -1)
-
-	var links []string
-	for _, match := range matches {
-		links = append(links, match[1])
+func extractDomain(link string) (string, error) {
+	u, err := url.Parse(link)
+	if err != nil {
+		return "", err
 	}
-
-	return links, nil
-}
-
-func ensureAbsoluteLinks(baseURL string, links []string) []string {
-	baseURL = "https://" + baseURL
-	var absoluteLinks []string
-
-	for _, link := range links {
-		// Check if the link starts with "http://", "https://", or "//"
-		if strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://") || strings.HasPrefix(link, "//") {
-			absoluteLinks = append(absoluteLinks, link)
-		} else if strings.HasPrefix(link, "mailto:") {
-			// Skip mailto links
-			continue
-		} else {
-			// Construct an absolute URL by combining the base URL and the relative link
-			absoluteURL := baseURL + "/" + link
-			absoluteLinks = append(absoluteLinks, absoluteURL)
-		}
-	}
-
-	return absoluteLinks
+	return u.Hostname(), nil
 }
 
 func (self Plugin) GetConfig() transport.TransportEntity {
 	return transport.TransportEntity{
 		ID:         -1,
 		Type:       "Action",
-		Value:      "extractLinks",
+		Value:      "addPage",
 		Context:    "System",
 		Properties: make(map[string]string),
 		ChildRelations: []transport.TransportRelation{
@@ -130,7 +101,18 @@ func (self Plugin) GetConfig() transport.TransportEntity {
 														Type:       "Structure",
 														Value:      "Content",
 														Context:    "System",
-														Properties: map[string]string{"Mode": "Set", "Type": "Primary"},
+														Properties: map[string]string{"Mode": "Set", "Type": "Secondary"},
+														ChildRelations: []transport.TransportRelation{
+															{
+																Target: transport.TransportEntity{
+																	ID:         -1,
+																	Type:       "Structure",
+																	Value:      "Link",
+																	Context:    "System",
+																	Properties: map[string]string{"Mode": "Set", "Type": "Primary"},
+																},
+															},
+														},
 													},
 												},
 											},
