@@ -33,7 +33,7 @@ func (self Plugin) Execute(input transport.TransportEntity, requirement string, 
 			if "" != val {
 				linkEntities = append(linkEntities, transport.TransportRelation{
 					Target: transport.TransportEntity{
-						ID:             0,
+						ID:             -2,
 						Type:           "Link",
 						Context:        "extractLinks",
 						Value:          val,

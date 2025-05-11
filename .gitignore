@@ -1,2 +1,5 @@
 plugins/*.so
 .idea/
+*.log
+cmd/client/cli
+*.txt

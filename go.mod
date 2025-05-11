@@ -1,11 +1,11 @@
 module github.com/voodooEntity/go-cyberbrain-example-project-webcrawler
 
-go 1.18
+go 1.21
+
+toolchain go1.24.0
 
 require (
 	github.com/voodooEntity/archivist v1.0.2
-	github.com/voodooEntity/gits v0.0.21
-	github.com/voodooEntity/go-cyberbrain-plugin-interface v0.0.0-20230529094852-f3f85a1ac5c1
+	github.com/voodooEntity/gits v0.9.5
+	github.com/voodooEntity/go-cyberbrain-plugin-interface v0.2.2
 )
-
-require golang.org/x/net v0.15.0 // indirect
